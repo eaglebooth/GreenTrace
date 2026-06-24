@@ -1,0 +1,7 @@
+frontend/.env.local
+frontend/.next
+frontend/.vercel
+frontend/node_modules
+frontend/dev-server.log
+frontend/dev-server.err.log
+tests/__pycache__
