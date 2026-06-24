@@ -4,6 +4,12 @@ Dynamic carbon-credit certification for supply chains, powered by GenLayer AI au
 
 **One-line pitch:** GreenTrace dies without GenLayer because carbon-credit issuance depends on subjective AI comparison between company reports and live third-party evidence such as satellite pages, sensor data, and local environmental investigations.
 
+## Submission Links
+
+- **Live app:** https://greentrace-three.vercel.app
+- **GitHub:** https://github.com/eaglebooth/GreenTrace
+- **Contract:** `0x4CC22499aA6DC3fF7dEa1ba5551273dd235c9f68`
+
 ## Why GenLayer
 
 Traditional carbon credits are easy to manipulate when companies self-report polished sustainability numbers. A deterministic contract can store a number, but it cannot decide whether a reforestation claim is real, whether pollution data contradicts the report, or whether a project is ecological value or greenwashing.
