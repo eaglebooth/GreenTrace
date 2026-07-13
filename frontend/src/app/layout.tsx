@@ -1,19 +1,10 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { AppShell } from "@/components/AppShell";
+import { WalletProvider } from "@/components/WalletProvider";
 
-export const metadata: Metadata = {
-  title: "GreenTrace",
-  description: "Dynamic carbon-credit certification powered by GenLayer AI audits.",
-};
+export const metadata: Metadata = { title: "GreenTrace V2", description: "Evidence-bound carbon credit certification on GenLayer." };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  );
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  return <html lang="en"><body><WalletProvider><AppShell>{children}</AppShell></WalletProvider></body></html>;
 }

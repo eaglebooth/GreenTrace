@@ -1,0 +1,1 @@
+import{PageHead}from"@/components/PageHead";import{ReportDetail}from"@/components/ReportDetail";export default async function P({params}:{params:Promise<{id:string}>}){const{id}=await params;return <><PageHead eyebrow={`Report #${id}`} title="One audit, every state transition." copy="Sync the complete report before choosing the next allowed action."/><ReportDetail id={id}/></>}

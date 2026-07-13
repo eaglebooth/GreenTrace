@@ -1,0 +1,1 @@
+export function PageHead({eyebrow,title,copy}:{eyebrow:string;title:string;copy:string}){return <section className="page-head"><span className="badge">{eyebrow}</span><h1>{title}</h1><p>{copy}</p></section>}

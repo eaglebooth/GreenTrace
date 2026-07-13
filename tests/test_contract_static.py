@@ -7,83 +7,64 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 CONTRACT = ROOT / "contracts" / "GreenTrace.py"
 
 
-class GreenTraceContractStaticTests(unittest.TestCase):
-    def setUp(self):
-        self.source = CONTRACT.read_text(encoding="utf-8")
-        self.tree = ast.parse(self.source)
+class GreenTraceV2Tests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.source = CONTRACT.read_text(encoding="utf-8")
+        cls.tree = ast.parse(cls.source)
 
-    def test_header_and_imports(self):
+    def section(self, start: str, end: str) -> str:
+        return self.source[self.source.index(start):self.source.index(end)]
+
+    def test_runtime_header(self):
         lines = self.source.splitlines()
         self.assertEqual(lines[0], "# v0.2.16")
-        self.assertEqual(
-            lines[1],
-            '# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }',
-        )
-        self.assertEqual(lines[2], "from genlayer import *")
+        self.assertEqual(lines[1], '# { "Depends": "py-genlayer:1jb45aa8ynh2a9c9xn3b7qqh8sm5q93hwfp7jqmwsfhh8jpz09h6" }')
 
-        imports = [
-            node
-            for node in self.tree.body
-            if isinstance(node, (ast.Import, ast.ImportFrom))
-        ]
-        rendered = []
-        for node in imports:
-            if isinstance(node, ast.ImportFrom):
-                rendered.append(f"from {node.module} import *")
-            else:
-                rendered.extend(f"import {alias.name}" for alias in node.names)
-        self.assertEqual(rendered, ["from genlayer import *", "import typing", "import json"])
+    def test_owner_is_derived_and_address_typed(self):
+        self.assertIn("company_owner: TreeMap[u256, Address]", self.source)
+        register = self.section("def register_company", "def submit_report")
+        self.assertIn("owner = gl.message.sender_address", register)
+        self.assertNotIn("wallet:", register)
 
-    def test_storage_allowed_types(self):
-        contract = next(
-            node
-            for node in self.tree.body
-            if isinstance(node, ast.ClassDef) and node.name == "GreenTrace"
-        )
-        allowed_scalars = {"u256"}
-        for node in contract.body:
-            if not isinstance(node, ast.AnnAssign):
-                continue
-            annotation = ast.unparse(node.annotation)
-            is_allowed_map = annotation in {"TreeMap[u256, str]", "TreeMap[u256, u256]"}
-            is_allowed_array = annotation in {"DynArray[str]", "DynArray[u256]"}
-            is_allowed_scalar = annotation in allowed_scalars
-            self.assertTrue(
-                is_allowed_map or is_allowed_array or is_allowed_scalar,
-                f"Forbidden storage annotation: {annotation}",
-            )
+    def test_company_writes_are_authorized(self):
+        submit = self.section("def submit_report", "def audit_report")
+        self.assertIn('return "NOT_COMPANY_OWNER"', submit)
+        transfer = self.section("def transfer_credits", "def retire_credits")
+        self.assertIn("sender = gl.message.sender_address", transfer)
 
-    def test_public_signatures(self):
-        contract = next(
-            node
-            for node in self.tree.body
-            if isinstance(node, ast.ClassDef) and node.name == "GreenTrace"
-        )
-        allowed = {"u256", "str", "typing.Any"}
-        for node in contract.body:
-            if not isinstance(node, ast.FunctionDef):
-                continue
-            decorators = [ast.unparse(decorator) for decorator in node.decorator_list]
-            if not any(decorator in {"gl.public.write", "gl.public.view"} for decorator in decorators):
-                continue
-            params = [arg for arg in node.args.args if arg.arg != "self"]
-            self.assertLessEqual(len(params), 6, f"{node.name} has too many params")
-            for param in params:
-                self.assertIsNotNone(param.annotation, f"{node.name}.{param.arg} is untyped")
-                rendered = ast.unparse(param.annotation)
-                self.assertIn(rendered, allowed, f"{node.name}.{param.arg}: {rendered}")
-            self.assertIsNotNone(node.returns, f"{node.name} is missing return type")
-            self.assertIn(ast.unparse(node.returns), allowed, f"{node.name} return type")
+    def test_subjective_audits_use_comparative_consensus(self):
+        self.assertNotIn("gl.eq_principle.strict_eq", self.source)
+        self.assertEqual(self.source.count("gl.eq_principle.prompt_comparative"), 2)
 
-    def test_nondet_wrapped_in_consensus(self):
-        self.assertIn("gl.nondet.web.render", self.source)
-        self.assertIn("gl.nondet.exec_prompt", self.source)
-        self.assertIn("gl.eq_principle.strict_eq", self.source)
+    def test_current_web_render_api(self):
+        self.assertIn('mode="html"', self.source)
+        self.assertNotIn("media_type=", self.source)
+        self.assertNotIn(".body.decode", self.source)
 
-    def test_carbon_credit_domain_logic_present(self):
-        self.assertIn("greenwash_risk", self.source)
-        self.assertIn("credits_awarded", self.source)
-        self.assertIn("transfer_credits", self.source)
+    def test_sources_are_constrained(self):
+        self.assertIn("trusted_source_hosts: DynArray[str]", self.source)
+        self.assertIn('return "UNTRUSTED_SATELLITE_SOURCE"', self.source)
+        self.assertIn('return "UNTRUSTED_SENSOR_SOURCE"', self.source)
+        self.assertIn('return "SELF_REPORT_DOMAIN_MISMATCH"', self.source)
+
+    def test_duplicate_period_and_bounds_guards(self):
+        self.assertIn('return "PERIOD_ALREADY_SUBMITTED"', self.source)
+        self.assertIn("requested_credits > self.company_baseline_tons", self.source)
+        self.assertIn("if reduction > baseline", self.source)
+
+    def test_deterministic_thresholds_and_finalization(self):
+        self.assertIn("def _decision_for", self.source)
+        self.assertIn("def _credits_for", self.source)
+        finalize = self.section("def finalize_issuance", "def transfer_credits")
+        self.assertIn('return "NOT_SOURCE_ADMIN"', finalize)
+        self.assertIn('return "ALREADY_FINALIZED"', finalize)
+
+    def test_credit_ownership_and_retirement(self):
+        self.assertIn("wallet_credit_balance: TreeMap[Address, u256]", self.source)
+        self.assertIn("def transfer_credits", self.source)
+        self.assertIn("def retire_credits", self.source)
+        self.assertIn("total_credits_retired", self.source)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,1 @@
+import{ContractVerifier}from"@/components/ContractVerifier";import{PageHead}from"@/components/PageHead";export default function P(){return <><PageHead eyebrow="Connection proof" title="Verify the deployed carbon ledger." copy="This page reads market state directly through genlayer-js and never substitutes demo values."/><ContractVerifier/></>}
